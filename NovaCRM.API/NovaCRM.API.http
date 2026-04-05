@@ -1,0 +1,8 @@
+@NovaCRM.API_HostAddress = http:
+
+GET {{NovaCRM.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+
