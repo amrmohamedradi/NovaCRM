@@ -22,6 +22,7 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : Base
                 .Include(c => c.Notes)
                 .Include(c => c.Activities)
                 .Include(c => c.Attachments)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(c => c.Id == id) as T;
         }
 
@@ -82,6 +83,7 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : Base
                 .Include(c => c.Deals)
                 .Include(c => c.Notes)
                 .Include(c => c.Activities)
+                .AsSplitQuery()
                 .ToListAsync()) as IEnumerable<T> ?? Enumerable.Empty<T>();
         }
 
@@ -109,6 +111,7 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : Base
                     .Include(c => c.Deals)
                     .Include(c => c.Notes)
                     .Include(c => c.Activities)
+                    .AsSplitQuery()
                     .Where(expr)
                     .ToListAsync();
                 return (result as IEnumerable<T>)!;

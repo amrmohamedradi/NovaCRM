@@ -10,6 +10,7 @@ public class Customer : BaseEntity
     public string? Phone { get; set; }
     public string? Company { get; set; }
     public CustomerStatus Status { get; set; } = CustomerStatus.Lead;
+    public string? AssignedToUserId { get; set; }
 
     public ICollection<Contact>    Contacts    { get; set; } = new List<Contact>();
     public ICollection<Deal>       Deals       { get; set; } = new List<Deal>();

@@ -75,7 +75,16 @@ try
             };
         });
 
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("RequireAdmin", policy => 
+            policy.RequireRole("Admin"));
+
+        options.AddPolicy("CanWriteData", policy => 
+            policy.RequireRole("Admin", "Sales", "Manager"));
+
+        options.FallbackPolicy = options.DefaultPolicy; 
+    });
 
     var rl = builder.Configuration.GetSection("RateLimitSettings");
     builder.Services.AddRateLimiter(opts =>

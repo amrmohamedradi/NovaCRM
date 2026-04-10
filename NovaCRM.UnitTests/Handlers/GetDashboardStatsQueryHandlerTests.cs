@@ -3,6 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using NovaCRM.Application.DTOs;
 using NovaCRM.Application.Features.Dashboard.Queries;
+using Microsoft.Extensions.Caching.Memory;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Interfaces;
 
@@ -14,12 +15,14 @@ public class GetDashboardStatsQueryHandlerTests
     private readonly IRepository<Deal> _dealRepo = Substitute.For<IRepository<Deal>>();
     private readonly IRepository<Note> _noteRepo = Substitute.For<IRepository<Note>>();
     private readonly IRepository<Activity> _activityRepo = Substitute.For<IRepository<Activity>>();
+    private readonly IMemoryCache _cache = Substitute.For<IMemoryCache>();
     private readonly IMapper _mapper = Substitute.For<IMapper>();
     private readonly GetDashboardStatsQueryHandler _sut;
 
     public GetDashboardStatsQueryHandlerTests()
     {
         _sut = new GetDashboardStatsQueryHandler(
+            _cache,
             _customerRepo,
             _dealRepo,
             _noteRepo,

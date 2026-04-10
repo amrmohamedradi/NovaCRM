@@ -25,6 +25,16 @@ public class LoginCommandHandler(
         var role  = roles.FirstOrDefault() ?? "Viewer";
         var token = jwtService.GenerateToken(user.Id, user.Email!, user.FullName, role);
 
-        return new AuthResultDto { Token = token, Email = user.Email!, FullName = user.FullName, Role = role };
+        var refreshToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        await userManager.SetAuthenticationTokenAsync(user, "NovaCRMProvider", "RefreshToken", refreshToken);
+
+        return new AuthResultDto 
+        { 
+            Token = token, 
+            RefreshToken = refreshToken,
+            Email = user.Email!, 
+            FullName = user.FullName, 
+            Role = role 
+        };
     }
 }

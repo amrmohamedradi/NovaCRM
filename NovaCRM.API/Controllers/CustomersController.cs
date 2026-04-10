@@ -32,7 +32,7 @@ public class CustomersController(IMediator mediator) : ControllerBase
         return Ok(ApiResponse<CustomerDetailDto>.Ok(result));
     }
     [HttpPost]
-    [Authorize(Roles = "Admin,Sales")]
+    [Authorize(Policy = "CanWriteData")]
     [ProducesResponseType(typeof(ApiResponse<CustomerDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<ActionResult<ApiResponse<CustomerDto>>> Create([FromBody] CreateCustomerCommand command)
@@ -41,7 +41,7 @@ public class CustomersController(IMediator mediator) : ControllerBase
         return StatusCode(201, ApiResponse<CustomerDto>.Created(result, "Customer created."));
     }
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,Sales")]
+    [Authorize(Policy = "CanWriteData")]
     [ProducesResponseType(typeof(ApiResponse<CustomerDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
@@ -52,7 +52,7 @@ public class CustomersController(IMediator mediator) : ControllerBase
         return Ok(ApiResponse<CustomerDto>.Ok(result, "Customer updated."));
     }
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "RequireAdmin")]
     [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<ActionResult<ApiResponse<bool>>> Delete(Guid id)

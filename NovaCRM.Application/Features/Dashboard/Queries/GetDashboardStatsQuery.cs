@@ -4,12 +4,14 @@ using NovaCRM.Application.DTOs;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Enums;
 using NovaCRM.Domain.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace NovaCRM.Application.Features.Dashboard.Queries;
 
 public record GetDashboardStatsQuery : IRequest<DashboardStatsDto>;
 
 public class GetDashboardStatsQueryHandler(
+    IMemoryCache           cache,
     IRepository<Customer>  customerRepo,
     IRepository<Deal>      dealRepo,
     IRepository<Note>      noteRepo,
@@ -23,6 +25,13 @@ public class GetDashboardStatsQueryHandler(
         var now          = DateTime.UtcNow;
         var monthStart   = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var followUpEnd  = now.AddDays(7);
+
+        const string cacheKey = "dashboard_stats_global";
+
+        if (cache.TryGetValue(cacheKey, out DashboardStatsDto? cachedStats))
+        {
+            return cachedStats!;
+        }
 
         var totalCustomers = await customerRepo.CountWhereAsync(null, ct);
 
@@ -54,7 +63,7 @@ public class GetDashboardStatsQueryHandler(
                         .Take(5),
             ct);
 
-        return new DashboardStatsDto
+        var stats = new DashboardStatsDto
         {
             TotalCustomers     = totalCustomers,
             TotalDeals         = totalDeals,
@@ -64,5 +73,12 @@ public class GetDashboardStatsQueryHandler(
             UpcomingFollowUps  = upcomingFollowUps,
             RecentActivities   = mapper.Map<List<ActivityDto>>(recentActivities)
         };
+
+        var cacheOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+        
+        cache.Set(cacheKey, stats, cacheOptions);
+
+        return stats;
     }
 }

@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NovaCRM.Application.Common;
 using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Common;
 using NovaCRM.Domain.Entities;
@@ -9,13 +11,16 @@ namespace NovaCRM.Infrastructure.Data;
 public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     private readonly ICurrentUserService? _currentUser;
+    private readonly IPublisher? _publisher;
 
     public AppDbContext(
         DbContextOptions<AppDbContext> options,
-        ICurrentUserService? currentUser = null)
+        ICurrentUserService? currentUser = null,
+        IPublisher? publisher = null)
         : base(options)
     {
         _currentUser = currentUser;
+        _publisher = publisher;
     }
 
     public DbSet<Customer>   Customers   => Set<Customer>();
@@ -78,7 +83,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Attachment>().HasQueryFilter(e => !e.IsDeleted);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
 
         var actor = (_currentUser?.IsAuthenticated == true)
@@ -113,6 +118,31 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             }
         }
 
-        return base.SaveChangesAsync(ct);
+        var result = await base.SaveChangesAsync(ct);
+        await DispatchDomainEventsAsync();
+        return result;
+    }
+
+    private async Task DispatchDomainEventsAsync()
+    {
+        if (_publisher == null) return;
+
+        var domainEventEntities = ChangeTracker.Entries<BaseEntity>()
+            .Select(x => x.Entity)
+            .Where(x => x.DomainEvents.Any())
+            .ToArray();
+
+        foreach (var entity in domainEventEntities)
+        {
+            var events = entity.DomainEvents.ToArray();
+            entity.ClearDomainEvents();
+            
+            foreach (var domainEvent in events)
+            {
+                var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+                var notification = (INotification)Activator.CreateInstance(notificationType, domainEvent)!;
+                await _publisher.Publish(notification);
+            }
+        }
     }
 }

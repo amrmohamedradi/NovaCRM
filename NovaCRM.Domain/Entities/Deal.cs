@@ -1,5 +1,6 @@
 using NovaCRM.Domain.Common;
 using NovaCRM.Domain.Enums;
+using NovaCRM.Domain.Events;
 
 namespace NovaCRM.Domain.Entities;
 
@@ -13,4 +14,15 @@ public class Deal : BaseEntity
 
     public Customer Customer { get; set; } = null!;
     public ICollection<Activity> Activities { get; set; } = new List<Activity>();
+
+    public string? AssignedToUserId { get; set; }
+
+    public void MarkAsWon()
+    {
+        if (Stage != DealStage.Won)
+        {
+            Stage = DealStage.Won;
+            AddDomainEvent(new DealWonEvent(Id, Value));
+        }
+    }
 }
