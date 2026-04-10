@@ -9,6 +9,3 @@ public enum DealStage
     Won,
     Lost
 }
-
-
-

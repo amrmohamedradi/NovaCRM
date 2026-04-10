@@ -7,6 +7,3 @@ public enum ActivityType
     Meeting,
     Task
 }
-
-
-

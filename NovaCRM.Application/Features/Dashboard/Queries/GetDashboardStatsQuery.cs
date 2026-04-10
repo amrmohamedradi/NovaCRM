@@ -6,59 +6,63 @@ using NovaCRM.Domain.Enums;
 using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Dashboard.Queries;
+
 public record GetDashboardStatsQuery : IRequest<DashboardStatsDto>;
 
 public class GetDashboardStatsQueryHandler(
-    IRepository<Customer> customerRepo,
-    IRepository<Deal> dealRepo,
-    IRepository<Note> noteRepo,
-    IRepository<Activity> activityRepo,
+    IRepository<Customer>  customerRepo,
+    IRepository<Deal>      dealRepo,
+    IRepository<Note>      noteRepo,
+    IRepository<Activity>  activityRepo,
     IMapper mapper)
     : IRequestHandler<GetDashboardStatsQuery, DashboardStatsDto>
 {
-    public async Task<DashboardStatsDto> Handle(GetDashboardStatsQuery request, CancellationToken ct)
+    public async Task<DashboardStatsDto> Handle(
+        GetDashboardStatsQuery request, CancellationToken ct)
     {
-        var now = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var followUpCutoff = now.AddDays(7);
+        var now          = DateTime.UtcNow;
+        var monthStart   = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var followUpEnd  = now.AddDays(7);
 
-        
-        var customers  = (await customerRepo.GetAllAsync()).ToList();
-        var deals      = (await dealRepo.GetAllAsync()).ToList();
-        var notes      = (await noteRepo.GetAllAsync()).ToList();
-        var activities = (await activityRepo.GetAllAsync()).ToList();
+        var totalCustomers = await customerRepo.CountWhereAsync(null, ct);
 
-        
-        var wonThisMonth = deals
-            .Where(d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart)
-            .ToList();
+        var totalDeals = await dealRepo.CountWhereAsync(null, ct);
 
-        
-        var upcomingFollowUps = notes
-            .Count(n => n.FollowUpDate.HasValue &&
-                        n.FollowUpDate.Value >= now &&
-                        n.FollowUpDate.Value <= followUpCutoff);
+        var totalPipelineValue = await dealRepo.SumDecimalAsync(
+            d => d.Value,
+            d => d.Stage != DealStage.Won && d.Stage != DealStage.Lost,
+            ct);
 
-        
-        var recentActivities = activities
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(5)
-            .ToList();
+        var dealsWonThisMonth = await dealRepo.CountWhereAsync(
+            d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart,
+            ct);
+
+        var revenueThisMonth = await dealRepo.SumDecimalAsync(
+            d => d.Value,
+            d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart,
+            ct);
+
+        var upcomingFollowUps = await noteRepo.CountWhereAsync(
+            n => n.FollowUpDate.HasValue &&
+                 n.FollowUpDate!.Value >= now &&
+                 n.FollowUpDate.Value  <= followUpEnd,
+            ct);
+
+        var recentActivities = await activityRepo.ExecuteAsync(
+            activityRepo.Query()
+                        .OrderByDescending(a => a.CreatedAt)
+                        .Take(5),
+            ct);
 
         return new DashboardStatsDto
         {
-            TotalCustomers     = customers.Count,
-            TotalDeals         = deals.Count,
-            TotalPipelineValue = deals
-                .Where(d => d.Stage != DealStage.Won && d.Stage != DealStage.Lost)
-                .Sum(d => d.Value),
-            DealsWonThisMonth  = wonThisMonth.Count,
-            RevenueThisMonth   = wonThisMonth.Sum(d => d.Value),
+            TotalCustomers     = totalCustomers,
+            TotalDeals         = totalDeals,
+            TotalPipelineValue = totalPipelineValue,
+            DealsWonThisMonth  = dealsWonThisMonth,
+            RevenueThisMonth   = revenueThisMonth,
             UpcomingFollowUps  = upcomingFollowUps,
             RecentActivities   = mapper.Map<List<ActivityDto>>(recentActivities)
         };
     }
 }
-
-
-

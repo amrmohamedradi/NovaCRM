@@ -47,6 +47,3 @@ public class NotesController(IMediator mediator) : ControllerBase
 }
 
 public record CreateNoteRequest(string Content, DateTime? FollowUpDate);
-
-
-

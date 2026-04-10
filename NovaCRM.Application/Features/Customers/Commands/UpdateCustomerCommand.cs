@@ -34,6 +34,3 @@ public class UpdateCustomerCommandHandler(IRepository<Customer> repo, IMapper ma
         return mapper.Map<CustomerDto>(customer);
     }
 }
-
-
-

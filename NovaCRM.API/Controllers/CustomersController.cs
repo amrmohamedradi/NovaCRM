@@ -67,6 +67,3 @@ public record UpdateCustomerRequest(
     string? Phone,
     string? Company,
     CustomerStatus Status);
-
-
-

@@ -5,6 +5,7 @@ using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Contacts.Queries;
+
 public record GetContactsByCustomerIdQuery(Guid CustomerId) : IRequest<List<ContactDto>>;
 
 public class GetContactsByCustomerIdQueryHandler(IRepository<Contact> repo, IMapper mapper)
@@ -12,10 +13,13 @@ public class GetContactsByCustomerIdQueryHandler(IRepository<Contact> repo, IMap
 {
     public async Task<List<ContactDto>> Handle(GetContactsByCustomerIdQuery request, CancellationToken ct)
     {
-        var contacts = await repo.FindAsync(c => c.CustomerId == request.CustomerId);
-        return mapper.Map<List<ContactDto>>(contacts.OrderBy(c => c.FullName).ToList());
+
+        var contacts = await repo.ExecuteAsync(
+            repo.Query()
+                .Where(c => c.CustomerId == request.CustomerId)
+                .OrderBy(c => c.FullName),
+            ct);
+
+        return mapper.Map<List<ContactDto>>(contacts);
     }
 }
-
-
-

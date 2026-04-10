@@ -18,6 +18,3 @@ public class DeleteActivityCommandHandler(IRepository<Activity> repo)
         return true;
     }
 }
-
-
-

@@ -18,6 +18,3 @@ public class DeleteNoteCommandHandler(IRepository<Note> repo)
         return true;
     }
 }
-
-
-

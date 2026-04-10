@@ -19,6 +19,3 @@ public class DashboardController(IMediator mediator) : ControllerBase
         return Ok(ApiResponse<DashboardStatsDto>.Ok(result));
     }
 }
-
-
-

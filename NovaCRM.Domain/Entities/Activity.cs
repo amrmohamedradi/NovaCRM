@@ -12,10 +12,6 @@ public class Activity : BaseEntity
     public DateTime DueDate { get; set; }
     public bool IsDone { get; set; }
 
-    
     public Customer Customer { get; set; } = null!;
     public Deal? Deal { get; set; }
 }
-
-
-

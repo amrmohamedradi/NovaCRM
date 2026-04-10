@@ -30,6 +30,3 @@ public class UpdateContactCommandHandler(IRepository<Contact> repo, IMapper mapp
         return mapper.Map<ContactDto>(contact);
     }
 }
-
-
-

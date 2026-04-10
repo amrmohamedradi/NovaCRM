@@ -39,6 +39,3 @@ public class CreateActivityCommandHandler(
         return mapper.Map<ActivityDto>(activity);
     }
 }
-
-
-

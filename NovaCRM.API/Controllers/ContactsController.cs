@@ -51,6 +51,3 @@ public class ContactsController(IMediator mediator) : ControllerBase
 
 public record CreateContactRequest(string FullName, string Email, string? Phone, string? Position);
 public record UpdateContactRequest(string FullName, string Email, string? Phone, string? Position);
-
-
-

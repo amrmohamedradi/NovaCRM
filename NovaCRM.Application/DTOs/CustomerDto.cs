@@ -15,10 +15,8 @@ public class CustomerDto
 }
 public class CustomerDetailDto : CustomerDto
 {
-    public List<ContactDto> Contacts { get; set; } = new();
-    public List<DealDto> Deals { get; set; } = new();
-    public List<NoteDto> Notes { get; set; } = new();
+    public List<ContactDto>    Contacts    { get; set; } = new();
+    public List<DealDto>       Deals       { get; set; } = new();
+    public List<NoteDto>       Notes       { get; set; } = new();
+    public List<AttachmentDto> Attachments { get; set; } = new();
 }
-
-
-

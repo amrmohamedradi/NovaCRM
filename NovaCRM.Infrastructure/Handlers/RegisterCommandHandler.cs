@@ -13,7 +13,7 @@ public class RegisterCommandHandler(
 {
     public async Task<AuthResultDto> Handle(RegisterCommand request, CancellationToken ct)
     {
-        
+
         var existing = await userManager.FindByEmailAsync(request.Email);
         if (existing != null)
             throw new InvalidOperationException("Email is already registered.");
@@ -32,7 +32,6 @@ public class RegisterCommandHandler(
             throw new InvalidOperationException(errors);
         }
 
-        
         await userManager.AddToRoleAsync(user, "Sales");
 
         var roles = await userManager.GetRolesAsync(user);
@@ -42,6 +41,3 @@ public class RegisterCommandHandler(
         return new AuthResultDto { Token = token, Email = user.Email!, FullName = user.FullName, Role = role };
     }
 }
-
-
-

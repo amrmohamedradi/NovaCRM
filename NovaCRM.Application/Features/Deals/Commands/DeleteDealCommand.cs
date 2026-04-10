@@ -18,6 +18,3 @@ public class DeleteDealCommandHandler(IRepository<Deal> repo)
         return true;
     }
 }
-
-
-

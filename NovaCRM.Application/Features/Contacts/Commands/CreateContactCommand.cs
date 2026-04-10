@@ -20,7 +20,7 @@ public class CreateContactCommandHandler(
 {
     public async Task<ContactDto> Handle(CreateContactCommand request, CancellationToken ct)
     {
-        
+
         _ = await customerRepo.GetByIdAsync(request.CustomerId)
             ?? throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
 
@@ -38,6 +38,3 @@ public class CreateContactCommandHandler(
         return mapper.Map<ContactDto>(contact);
     }
 }
-
-
-

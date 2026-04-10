@@ -53,6 +53,3 @@ public class ActivitiesController(IMediator mediator) : ControllerBase
         return Ok(ApiResponse<bool>.Ok(true, "Activity deleted."));
     }
 }
-
-
-

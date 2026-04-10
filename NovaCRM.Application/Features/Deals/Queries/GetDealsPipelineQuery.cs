@@ -5,17 +5,19 @@ using NovaCRM.Domain.Enums;
 using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Deals.Queries;
+
 public record GetDealsPipelineQuery : IRequest<List<DealPipelineDto>>;
 
 public class GetDealsPipelineQueryHandler(IRepository<Deal> repo)
     : IRequestHandler<GetDealsPipelineQuery, List<DealPipelineDto>>
 {
-    public async Task<List<DealPipelineDto>> Handle(GetDealsPipelineQuery request, CancellationToken ct)
+    public async Task<List<DealPipelineDto>> Handle(
+        GetDealsPipelineQuery request, CancellationToken ct)
     {
-        var all = await repo.GetAllAsync();
 
-        
-        var pipeline = all
+        var deals = await repo.ExecuteAsync(repo.Query(), ct);
+
+        var grouped = deals
             .GroupBy(d => d.Stage)
             .Select(g => new DealPipelineDto
             {
@@ -23,20 +25,12 @@ public class GetDealsPipelineQueryHandler(IRepository<Deal> repo)
                 Count      = g.Count(),
                 TotalValue = g.Sum(d => d.Value)
             })
-            .OrderBy(p => (int)p.Stage)
+            .ToDictionary(p => p.Stage);
+
+        return Enum.GetValues<DealStage>()
+            .Select(stage => grouped.TryGetValue(stage, out var dto)
+                ? dto
+                : new DealPipelineDto { Stage = stage, Count = 0, TotalValue = 0 })
             .ToList();
-
-        
-        var allStages = Enum.GetValues<DealStage>();
-        foreach (var stage in allStages)
-        {
-            if (!pipeline.Any(p => p.Stage == stage))
-                pipeline.Add(new DealPipelineDto { Stage = stage, Count = 0, TotalValue = 0 });
-        }
-
-        return pipeline.OrderBy(p => (int)p.Stage).ToList();
     }
 }
-
-
-

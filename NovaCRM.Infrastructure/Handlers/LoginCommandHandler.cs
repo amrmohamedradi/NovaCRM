@@ -28,6 +28,3 @@ public class LoginCommandHandler(
         return new AuthResultDto { Token = token, Email = user.Email!, FullName = user.FullName, Role = role };
     }
 }
-
-
-

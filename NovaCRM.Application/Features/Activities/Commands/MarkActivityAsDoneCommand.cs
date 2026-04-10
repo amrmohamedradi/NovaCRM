@@ -19,6 +19,3 @@ public class MarkActivityAsDoneCommandHandler(IRepository<Activity> repo)
         return true;
     }
 }
-
-
-

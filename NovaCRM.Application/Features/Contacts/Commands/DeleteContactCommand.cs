@@ -18,6 +18,3 @@ public class DeleteContactCommandHandler(IRepository<Contact> repo)
         return true;
     }
 }
-
-
-

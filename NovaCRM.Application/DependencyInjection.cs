@@ -12,21 +12,15 @@ public static class DependencyInjection
     {
         var assembly = typeof(DependencyInjection).Assembly;
 
-        
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 
-        
         services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MappingProfile).Assembly));
 
-        
         services.AddValidatorsFromAssembly(assembly);
 
-        
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         return services;
     }
 }
-
-
-

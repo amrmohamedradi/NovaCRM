@@ -5,6 +5,7 @@ using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Customers.Queries;
+
 public record GetCustomerByIdQuery(Guid Id) : IRequest<CustomerDetailDto>;
 
 public class GetCustomerByIdQueryHandler(IRepository<Customer> repo, IMapper mapper)
@@ -12,14 +13,10 @@ public class GetCustomerByIdQueryHandler(IRepository<Customer> repo, IMapper map
 {
     public async Task<CustomerDetailDto> Handle(GetCustomerByIdQuery request, CancellationToken ct)
     {
-        
-        var customers = await repo.FindAsync(c => c.Id == request.Id);
-        var customer = customers.FirstOrDefault()
+
+        var customer = await repo.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Customer {request.Id} not found.");
 
         return mapper.Map<CustomerDetailDto>(customer);
     }
 }
-
-
-

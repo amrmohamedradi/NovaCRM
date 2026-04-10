@@ -15,22 +15,18 @@ public static class DataSeeder
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        
         await db.Database.EnsureCreatedAsync();
 
-        
         string[] roles = ["Admin", "Sales", "Viewer"];
         foreach (var role in roles)
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
 
-        
         await EnsureUser(userManager, "Admin User",  "admin@novacrm.com", "Admin@123",  "Admin");
         await EnsureUser(userManager, "Sales User",  "sales@novacrm.com", "Sales@123",  "Sales");
         await EnsureUser(userManager, "Viewer User", "viewer@novacrm.com","Viewer@123", "Viewer");
 
-        
-        if (await db.Customers.AnyAsync()) return; 
+        if (await db.Customers.AnyAsync()) return;
 
         var customers = new List<Customer>
         {
@@ -43,7 +39,6 @@ public static class DataSeeder
         await db.Customers.AddRangeAsync(customers);
         await db.SaveChangesAsync();
 
-        
         var contacts = customers.SelectMany(c => new[]
         {
             new Contact { CustomerId = c.Id, FullName = $"{c.FullName} - Primary",   Email = $"primary.{c.Email}",   Phone = c.Phone,   Position = "CEO"       },
@@ -51,7 +46,6 @@ public static class DataSeeder
         }).ToList();
         await db.Contacts.AddRangeAsync(contacts);
 
-        
         var deals = new List<Deal>
         {
             new() { CustomerId = customers[0].Id, Title = "Enterprise License",   Value = 45000, Stage = DealStage.Won,         ExpectedCloseDate = DateTime.UtcNow.AddDays(-10) },
@@ -65,7 +59,6 @@ public static class DataSeeder
         };
         await db.Deals.AddRangeAsync(deals);
 
-        
         var notes = new List<Note>
         {
             new() { CustomerId = customers[0].Id, Content = "Discussed expansion plans. Very interested in our enterprise tier.",  FollowUpDate = DateTime.UtcNow.AddDays(2)  },
@@ -81,7 +74,6 @@ public static class DataSeeder
         };
         await db.Notes.AddRangeAsync(notes);
 
-        
         var activities = new List<Activity>
         {
             new() { CustomerId = customers[0].Id, DealId = deals[0].Id, Type = ActivityType.Call,    Description = "Closing call for Enterprise License deal.",  DueDate = DateTime.UtcNow.AddDays(-10), IsDone = true  },
@@ -112,6 +104,3 @@ public static class DataSeeder
             await userManager.AddToRoleAsync(user, role);
     }
 }
-
-
-

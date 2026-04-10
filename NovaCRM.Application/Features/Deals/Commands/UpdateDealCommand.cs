@@ -31,6 +31,3 @@ public class UpdateDealCommandHandler(IRepository<Deal> repo, IMapper mapper)
         return mapper.Map<DealDto>(deal);
     }
 }
-
-
-

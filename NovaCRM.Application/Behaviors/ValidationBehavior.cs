@@ -14,7 +14,6 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         if (!validators.Any())
             return await next(cancellationToken);
 
-        
         var context = new ValidationContext<TRequest>(request);
         var results = await Task.WhenAll(
             validators.Select(v => v.ValidateAsync(context, cancellationToken)));
@@ -30,6 +29,3 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         return await next(cancellationToken);
     }
 }
-
-
-

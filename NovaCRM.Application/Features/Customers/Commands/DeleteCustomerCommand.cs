@@ -18,6 +18,3 @@ public class DeleteCustomerCommandHandler(IRepository<Customer> repo)
         return true;
     }
 }
-
-
-

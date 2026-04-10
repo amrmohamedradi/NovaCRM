@@ -6,6 +6,3 @@ public enum CustomerStatus
     Active,
     Inactive
 }
-
-
-

@@ -18,6 +18,3 @@ public class GetDealByIdQueryHandler(IRepository<Deal> repo, IMapper mapper)
         return mapper.Map<DealDto>(deal);
     }
 }
-
-
-

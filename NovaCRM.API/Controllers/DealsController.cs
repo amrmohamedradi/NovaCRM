@@ -69,6 +69,3 @@ public class DealsController(IMediator mediator) : ControllerBase
 }
 
 public record UpdateDealRequest(string Title, decimal Value, DealStage Stage, DateTime? ExpectedCloseDate);
-
-
-

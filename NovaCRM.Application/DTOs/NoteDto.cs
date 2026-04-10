@@ -9,6 +9,3 @@ public class NoteDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
-
-
-

@@ -38,6 +38,3 @@ public class CreateDealCommandHandler(
         return mapper.Map<DealDto>(deal);
     }
 }
-
-
-

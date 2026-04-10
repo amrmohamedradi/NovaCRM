@@ -20,6 +20,3 @@ public class DealPipelineDto
     public int Count { get; set; }
     public decimal TotalValue { get; set; }
 }
-
-
-

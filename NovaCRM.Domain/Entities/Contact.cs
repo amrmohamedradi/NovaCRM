@@ -10,9 +10,5 @@ public class Contact : BaseEntity
     public string? Phone { get; set; }
     public string? Position { get; set; }
 
-    
     public Customer Customer { get; set; } = null!;
 }
-
-
-

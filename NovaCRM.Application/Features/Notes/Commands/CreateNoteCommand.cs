@@ -33,6 +33,3 @@ public class CreateNoteCommandHandler(
         return mapper.Map<NoteDto>(note);
     }
 }
-
-
-

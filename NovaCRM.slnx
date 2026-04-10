@@ -1,7 +1,9 @@
-﻿<Solution>
+<Solution>
   <Project Path="NovaCRM.API/NovaCRM.API.csproj" />
   <Project Path="NovaCRM.Application/NovaCRM.Application.csproj" />
   <Project Path="NovaCRM.Domain/NovaCRM.Domain.csproj" />
   <Project Path="NovaCRM.Infrastructure/NovaCRM.Infrastructure.csproj" />
+  <Project Path="NovaCRM.IntegrationTests/NovaCRM.IntegrationTests.csproj" />
+  <Project Path="NovaCRM.UnitTests/NovaCRM.UnitTests.csproj" />
 </Solution>
 

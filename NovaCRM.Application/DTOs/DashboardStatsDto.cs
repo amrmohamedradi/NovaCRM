@@ -10,6 +10,3 @@ public class DashboardStatsDto
     public int UpcomingFollowUps { get; set; }
     public List<ActivityDto> RecentActivities { get; set; } = new();
 }
-
-
-
