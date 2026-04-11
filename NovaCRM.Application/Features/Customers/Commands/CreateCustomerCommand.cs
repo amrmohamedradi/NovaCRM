@@ -1,9 +1,9 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Customers.Commands;
 public record CreateCustomerCommand(
@@ -13,7 +13,7 @@ public record CreateCustomerCommand(
     string? Company,
     CustomerStatus Status) : IRequest<CustomerDto>;
 
-public class CreateCustomerCommandHandler(IRepository<Customer> repo, IMapper mapper)
+public class CreateCustomerCommandHandler(IApplicationDbContext context, IMapper mapper)
     : IRequestHandler<CreateCustomerCommand, CustomerDto>
 {
     public async Task<CustomerDto> Handle(CreateCustomerCommand request, CancellationToken ct)
@@ -27,8 +27,8 @@ public class CreateCustomerCommandHandler(IRepository<Customer> repo, IMapper ma
             Status   = request.Status
         };
 
-        await repo.AddAsync(customer);
-        await repo.SaveChangesAsync();
+        context.Customers.Add(customer);
+        await context.SaveChangesAsync(ct);
 
         return mapper.Map<CustomerDto>(customer);
     }

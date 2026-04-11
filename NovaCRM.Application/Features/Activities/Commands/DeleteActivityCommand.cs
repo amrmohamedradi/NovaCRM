@@ -1,20 +1,20 @@
 using MediatR;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Activities.Commands;
 public record DeleteActivityCommand(Guid Id) : IRequest<bool>;
 
-public class DeleteActivityCommandHandler(IRepository<Activity> repo)
+public class DeleteActivityCommandHandler(IApplicationDbContext context)
     : IRequestHandler<DeleteActivityCommand, bool>
 {
     public async Task<bool> Handle(DeleteActivityCommand request, CancellationToken ct)
     {
-        var activity = await repo.GetByIdAsync(request.Id)
+        var activity = await context.Activities.FindAsync(new object[] { request.Id }, ct)
             ?? throw new KeyNotFoundException($"Activity {request.Id} not found.");
 
-        repo.Delete(activity);
-        await repo.SaveChangesAsync();
+        context.Activities.Remove(activity);
+        await context.SaveChangesAsync(ct);
         return true;
     }
 }

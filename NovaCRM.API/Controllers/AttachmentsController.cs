@@ -1,13 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NovaCRM.Application.Common;
 using NovaCRM.Application.DTOs;
 using NovaCRM.Application.Features.Attachments.Commands;
 using NovaCRM.Application.Features.Attachments.Queries;
 using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.API.Controllers;
 
@@ -16,7 +16,7 @@ namespace NovaCRM.API.Controllers;
 public class AttachmentsController(
     IMediator mediator,
     IFileStorageService fileStorage,
-    IRepository<Attachment> attachmentRepo) : ControllerBase
+    IApplicationDbContext context) : ControllerBase
 {
     private static readonly HashSet<string> AllowedTypes =
     [
@@ -81,7 +81,7 @@ public class AttachmentsController(
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     public async Task<IActionResult> Download(Guid id, CancellationToken ct)
     {
-        var attachment = await attachmentRepo.GetByIdAsync(id);
+        var attachment = await context.Attachments.FindAsync(new object[] { id });
         if (attachment is null)
             return NotFound(ApiResponse<object>.Fail($"Attachment {id} not found."));
 

@@ -1,9 +1,11 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using NovaCRM.Application.Common;
 using NovaCRM.Application.DTOs;
-using NovaCRM.Domain.Entities;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace NovaCRM.Application.Features.Dashboard.Queries;
@@ -12,10 +14,7 @@ public record GetDashboardStatsQuery : IRequest<DashboardStatsDto>;
 
 public class GetDashboardStatsQueryHandler(
     IMemoryCache           cache,
-    IRepository<Customer>  customerRepo,
-    IRepository<Deal>      dealRepo,
-    IRepository<Note>      noteRepo,
-    IRepository<Activity>  activityRepo,
+    IApplicationDbContext  context,
     IMapper mapper)
     : IRequestHandler<GetDashboardStatsQuery, DashboardStatsDto>
 {
@@ -33,35 +32,34 @@ public class GetDashboardStatsQueryHandler(
             return cachedStats!;
         }
 
-        var totalCustomers = await customerRepo.CountWhereAsync(null, ct);
+        var totalCustomers = await context.Customers.CountAsync(ct);
 
-        var totalDeals = await dealRepo.CountWhereAsync(null, ct);
+        var totalDeals = await context.Deals.CountAsync(ct);
 
-        var totalPipelineValue = await dealRepo.SumDecimalAsync(
-            d => d.Value,
-            d => d.Stage != DealStage.Won && d.Stage != DealStage.Lost,
-            ct);
+        var totalPipelineValue = await context.Deals
+            .Where(d => d.Stage != DealStage.Won && d.Stage != DealStage.Lost)
+            .SumAsync(d => d.Value, ct);
 
-        var dealsWonThisMonth = await dealRepo.CountWhereAsync(
+        var dealsWonThisMonth = await context.Deals.CountAsync(
             d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart,
             ct);
 
-        var revenueThisMonth = await dealRepo.SumDecimalAsync(
-            d => d.Value,
-            d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart,
-            ct);
+        var revenueThisMonth = await context.Deals
+            .Where(d => d.Stage == DealStage.Won && d.UpdatedAt >= monthStart)
+            .SumAsync(d => d.Value, ct);
 
-        var upcomingFollowUps = await noteRepo.CountWhereAsync(
+        var upcomingFollowUps = await context.Notes.CountAsync(
             n => n.FollowUpDate.HasValue &&
                  n.FollowUpDate!.Value >= now &&
                  n.FollowUpDate.Value  <= followUpEnd,
             ct);
 
-        var recentActivities = await activityRepo.ExecuteAsync(
-            activityRepo.Query()
-                        .OrderByDescending(a => a.CreatedAt)
-                        .Take(5),
-            ct);
+        var recentActivities = await context.Activities
+            .AsNoTracking()
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(5)
+            .ProjectTo<ActivityDto>(mapper.ConfigurationProvider)
+            .ToListAsync(ct);
 
         var stats = new DashboardStatsDto
         {
@@ -71,7 +69,7 @@ public class GetDashboardStatsQueryHandler(
             DealsWonThisMonth  = dealsWonThisMonth,
             RevenueThisMonth   = revenueThisMonth,
             UpcomingFollowUps  = upcomingFollowUps,
-            RecentActivities   = mapper.Map<List<ActivityDto>>(recentActivities)
+            RecentActivities   = recentActivities
         };
 
         var cacheOptions = new MemoryCacheEntryOptions()

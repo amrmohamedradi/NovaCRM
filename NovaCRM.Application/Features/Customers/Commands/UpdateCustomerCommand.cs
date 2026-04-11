@@ -1,9 +1,9 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Customers.Commands;
 public record UpdateCustomerCommand(
@@ -14,12 +14,12 @@ public record UpdateCustomerCommand(
     string? Company,
     CustomerStatus Status) : IRequest<CustomerDto>;
 
-public class UpdateCustomerCommandHandler(IRepository<Customer> repo, IMapper mapper)
+public class UpdateCustomerCommandHandler(IApplicationDbContext context, IMapper mapper)
     : IRequestHandler<UpdateCustomerCommand, CustomerDto>
 {
     public async Task<CustomerDto> Handle(UpdateCustomerCommand request, CancellationToken ct)
     {
-        var customer = await repo.GetByIdAsync(request.Id)
+        var customer = await context.Customers.FindAsync(new object[] { request.Id }, ct)
             ?? throw new KeyNotFoundException($"Customer {request.Id} not found.");
 
         customer.FullName = request.FullName;
@@ -28,8 +28,8 @@ public class UpdateCustomerCommandHandler(IRepository<Customer> repo, IMapper ma
         customer.Company  = request.Company;
         customer.Status   = request.Status;
 
-        repo.Update(customer);
-        await repo.SaveChangesAsync();
+        context.Customers.Update(customer);
+        await context.SaveChangesAsync(ct);
 
         return mapper.Map<CustomerDto>(customer);
     }

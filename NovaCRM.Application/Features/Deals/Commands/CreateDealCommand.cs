@@ -1,9 +1,9 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Deals.Commands;
 public record CreateDealCommand(
@@ -14,14 +14,13 @@ public record CreateDealCommand(
     DateTime? ExpectedCloseDate) : IRequest<DealDto>;
 
 public class CreateDealCommandHandler(
-    IRepository<Deal> repo,
-    IRepository<Customer> customerRepo,
+    IApplicationDbContext context,
     IMapper mapper)
     : IRequestHandler<CreateDealCommand, DealDto>
 {
     public async Task<DealDto> Handle(CreateDealCommand request, CancellationToken ct)
     {
-        _ = await customerRepo.GetByIdAsync(request.CustomerId)
+        _ = await context.Customers.FindAsync(new object[] { request.CustomerId }, ct)
             ?? throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
 
         var deal = new Deal
@@ -33,8 +32,8 @@ public class CreateDealCommandHandler(
             ExpectedCloseDate = request.ExpectedCloseDate
         };
 
-        await repo.AddAsync(deal);
-        await repo.SaveChangesAsync();
+        context.Deals.Add(deal);
+        await context.SaveChangesAsync(ct);
         return mapper.Map<DealDto>(deal);
     }
 }

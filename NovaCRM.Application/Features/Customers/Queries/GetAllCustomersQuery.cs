@@ -1,23 +1,24 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NovaCRM.Application.Common;
 using NovaCRM.Application.DTOs;
-using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
+using NovaCRM.Application.Interfaces;
 
 namespace NovaCRM.Application.Features.Customers.Queries;
 
 public record GetAllCustomersQuery(int Page, int PageSize, string? Search)
     : IRequest<PagedResult<CustomerDto>>;
 
-public class GetAllCustomersQueryHandler(IRepository<Customer> repo, IMapper mapper)
+public class GetAllCustomersQueryHandler(IApplicationDbContext context, IMapper mapper)
     : IRequestHandler<GetAllCustomersQuery, PagedResult<CustomerDto>>
 {
     public async Task<PagedResult<CustomerDto>> Handle(
         GetAllCustomersQuery request, CancellationToken ct)
     {
 
-        var query = repo.Query();
+        var query = context.Customers.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -27,19 +28,19 @@ public class GetAllCustomersQueryHandler(IRepository<Customer> repo, IMapper map
                 c.Email.ToLower().Contains(s));
         }
 
-        var total = await repo.CountAsync(query, ct);
+        var totalCount = await query.CountAsync(ct);
 
-        var items = await repo.ExecuteAsync(
-            query
-                .OrderByDescending(c => c.CreatedAt)
-                .Skip((request.Page - 1) * request.PageSize)
-                .Take(request.PageSize),
-            ct);
+        var pagedItems = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ProjectTo<CustomerDto>(mapper.ConfigurationProvider)
+            .ToListAsync(ct);
 
         return new PagedResult<CustomerDto>
         {
-            Items      = mapper.Map<List<CustomerDto>>(items),
-            TotalCount = total,
+            Items      = pagedItems,
+            TotalCount = totalCount,
             Page       = request.Page,
             PageSize   = request.PageSize
         };

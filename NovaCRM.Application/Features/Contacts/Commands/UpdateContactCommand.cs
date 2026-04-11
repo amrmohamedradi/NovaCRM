@@ -1,8 +1,8 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Contacts.Commands;
 public record UpdateContactCommand(
@@ -12,12 +12,12 @@ public record UpdateContactCommand(
     string? Phone,
     string? Position) : IRequest<ContactDto>;
 
-public class UpdateContactCommandHandler(IRepository<Contact> repo, IMapper mapper)
+public class UpdateContactCommandHandler(IApplicationDbContext context, IMapper mapper)
     : IRequestHandler<UpdateContactCommand, ContactDto>
 {
     public async Task<ContactDto> Handle(UpdateContactCommand request, CancellationToken ct)
     {
-        var contact = await repo.GetByIdAsync(request.Id)
+        var contact = await context.Contacts.FindAsync(new object[] { request.Id }, ct)
             ?? throw new KeyNotFoundException($"Contact {request.Id} not found.");
 
         contact.FullName = request.FullName;
@@ -25,8 +25,8 @@ public class UpdateContactCommandHandler(IRepository<Contact> repo, IMapper mapp
         contact.Phone    = request.Phone;
         contact.Position = request.Position;
 
-        repo.Update(contact);
-        await repo.SaveChangesAsync();
+        context.Contacts.Update(contact);
+        await context.SaveChangesAsync(ct);
         return mapper.Map<ContactDto>(contact);
     }
 }

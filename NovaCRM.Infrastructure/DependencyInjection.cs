@@ -4,11 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NovaCRM.Application.Interfaces;
-using NovaCRM.Domain.Interfaces;
 using NovaCRM.Infrastructure.BackgroundServices;
 using NovaCRM.Infrastructure.Data;
 using NovaCRM.Infrastructure.Handlers;
-using NovaCRM.Infrastructure.Repositories;
 using NovaCRM.Infrastructure.Services;
 
 namespace NovaCRM.Infrastructure;
@@ -43,7 +41,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         services.AddScoped<IJwtService, JwtService>();
 

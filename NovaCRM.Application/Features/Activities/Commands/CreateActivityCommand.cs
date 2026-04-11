@@ -1,9 +1,9 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Activities.Commands;
 public record CreateActivityCommand(
@@ -14,14 +14,13 @@ public record CreateActivityCommand(
     DateTime DueDate) : IRequest<ActivityDto>;
 
 public class CreateActivityCommandHandler(
-    IRepository<Activity> repo,
-    IRepository<Customer> customerRepo,
+    IApplicationDbContext context,
     IMapper mapper)
     : IRequestHandler<CreateActivityCommand, ActivityDto>
 {
     public async Task<ActivityDto> Handle(CreateActivityCommand request, CancellationToken ct)
     {
-        _ = await customerRepo.GetByIdAsync(request.CustomerId)
+        _ = await context.Customers.FindAsync(new object[] { request.CustomerId }, ct)
             ?? throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
 
         var activity = new Activity
@@ -34,8 +33,8 @@ public class CreateActivityCommandHandler(
             IsDone      = false
         };
 
-        await repo.AddAsync(activity);
-        await repo.SaveChangesAsync();
+        context.Activities.Add(activity);
+        await context.SaveChangesAsync(ct);
         return mapper.Map<ActivityDto>(activity);
     }
 }

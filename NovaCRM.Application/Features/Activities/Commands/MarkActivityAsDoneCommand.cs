@@ -1,21 +1,21 @@
 using MediatR;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Activities.Commands;
 public record MarkActivityAsDoneCommand(Guid Id) : IRequest<bool>;
 
-public class MarkActivityAsDoneCommandHandler(IRepository<Activity> repo)
+public class MarkActivityAsDoneCommandHandler(IApplicationDbContext context)
     : IRequestHandler<MarkActivityAsDoneCommand, bool>
 {
     public async Task<bool> Handle(MarkActivityAsDoneCommand request, CancellationToken ct)
     {
-        var activity = await repo.GetByIdAsync(request.Id)
+        var activity = await context.Activities.FindAsync(new object[] { request.Id }, ct)
             ?? throw new KeyNotFoundException($"Activity {request.Id} not found.");
 
         activity.IsDone = true;
-        repo.Update(activity);
-        await repo.SaveChangesAsync();
+        context.Activities.Update(activity);
+        await context.SaveChangesAsync(ct);
         return true;
     }
 }

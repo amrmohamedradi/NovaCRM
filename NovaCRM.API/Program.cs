@@ -122,7 +122,35 @@ try
             opts.JsonSerializerOptions.Converters.Add(
                 new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
-    builder.Services.AddOpenApi();
+    builder.Services.AddSwaggerGen(opts =>
+    {
+        opts.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "NovaCRM API", Version = "v1" });
+
+        opts.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Enter your valid JWT token."
+        });
+
+        opts.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
+            {
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
+    });
 
     var corsOrigins = builder.Configuration
         .GetSection("CorsSettings:AllowedOrigins")
@@ -161,11 +189,10 @@ try
     }
 
     app.UseCors();
-    app.MapOpenApi();
-    app.MapScalarApiReference(opts =>
+    app.UseSwagger();
+    app.UseSwaggerUI(opts =>
     {
-        opts.Title = "NovaCRM API";
-        opts.Theme = ScalarTheme.Purple;
+        opts.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaCRM API v1");
     });
     app.UseAuthentication();
     app.UseAuthorization();

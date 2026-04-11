@@ -8,7 +8,7 @@ using NovaCRM.Domain.Entities;
 
 namespace NovaCRM.Infrastructure.Data;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser>
+public class AppDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
 {
     private readonly ICurrentUserService? _currentUser;
     private readonly IPublisher? _publisher;

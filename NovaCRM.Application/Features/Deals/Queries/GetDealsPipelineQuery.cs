@@ -1,23 +1,22 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NovaCRM.Application.DTOs;
-using NovaCRM.Domain.Entities;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Enums;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Deals.Queries;
 
 public record GetDealsPipelineQuery : IRequest<List<DealPipelineDto>>;
 
-public class GetDealsPipelineQueryHandler(IRepository<Deal> repo)
+public class GetDealsPipelineQueryHandler(IApplicationDbContext context)
     : IRequestHandler<GetDealsPipelineQuery, List<DealPipelineDto>>
 {
     public async Task<List<DealPipelineDto>> Handle(
         GetDealsPipelineQuery request, CancellationToken ct)
     {
 
-        var deals = await repo.ExecuteAsync(repo.Query(), ct);
-
-        var grouped = deals
+        var groupedData = await context.Deals
+            .AsNoTracking()
             .GroupBy(d => d.Stage)
             .Select(g => new DealPipelineDto
             {
@@ -25,10 +24,10 @@ public class GetDealsPipelineQueryHandler(IRepository<Deal> repo)
                 Count      = g.Count(),
                 TotalValue = g.Sum(d => d.Value)
             })
-            .ToDictionary(p => p.Stage);
+            .ToDictionaryAsync(p => p.Stage, ct);
 
         return Enum.GetValues<DealStage>()
-            .Select(stage => grouped.TryGetValue(stage, out var dto)
+            .Select(stage => groupedData.TryGetValue(stage, out var dto)
                 ? dto
                 : new DealPipelineDto { Stage = stage, Count = 0, TotalValue = 0 })
             .ToList();

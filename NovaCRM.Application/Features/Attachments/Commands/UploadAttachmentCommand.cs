@@ -2,7 +2,6 @@ using MediatR;
 using NovaCRM.Application.DTOs;
 using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Attachments.Commands;
 
@@ -14,8 +13,7 @@ public record UploadAttachmentCommand(
     Stream FileStream) : IRequest<AttachmentDto>;
 
 public class UploadAttachmentCommandHandler(
-    IRepository<Customer>  customerRepo,
-    IRepository<Attachment> attachmentRepo,
+    IApplicationDbContext  context,
     IFileStorageService    fileStorage)
     : IRequestHandler<UploadAttachmentCommand, AttachmentDto>
 {
@@ -23,7 +21,7 @@ public class UploadAttachmentCommandHandler(
         UploadAttachmentCommand request, CancellationToken ct)
     {
 
-        _ = await customerRepo.GetByIdAsync(request.CustomerId)
+        _ = await context.Customers.FindAsync(new object[] { request.CustomerId }, ct)
             ?? throw new KeyNotFoundException(
                 $"Customer {request.CustomerId} not found.");
 
@@ -43,8 +41,8 @@ public class UploadAttachmentCommandHandler(
             SizeBytes   = request.SizeBytes
         };
 
-        await attachmentRepo.AddAsync(attachment);
-        await attachmentRepo.SaveChangesAsync();
+        context.Attachments.Add(attachment);
+        await context.SaveChangesAsync(ct);
 
         return ToDto(attachment);
     }

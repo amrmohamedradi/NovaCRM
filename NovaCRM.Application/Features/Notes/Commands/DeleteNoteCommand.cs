@@ -1,20 +1,20 @@
 using MediatR;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Notes.Commands;
 public record DeleteNoteCommand(Guid Id) : IRequest<bool>;
 
-public class DeleteNoteCommandHandler(IRepository<Note> repo)
+public class DeleteNoteCommandHandler(IApplicationDbContext context)
     : IRequestHandler<DeleteNoteCommand, bool>
 {
     public async Task<bool> Handle(DeleteNoteCommand request, CancellationToken ct)
     {
-        var note = await repo.GetByIdAsync(request.Id)
+        var note = await context.Notes.FindAsync(new object[] { request.Id }, ct)
             ?? throw new KeyNotFoundException($"Note {request.Id} not found.");
 
-        repo.Delete(note);
-        await repo.SaveChangesAsync();
+        context.Notes.Remove(note);
+        await context.SaveChangesAsync(ct);
         return true;
     }
 }

@@ -1,35 +1,40 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NovaCRM.Application.DTOs;
-using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
+using NovaCRM.Application.Interfaces;
 
 namespace NovaCRM.Application.Features.Attachments.Queries;
 
 public record GetAttachmentsByCustomerIdQuery(Guid CustomerId) : IRequest<List<AttachmentDto>>;
 
-public class GetAttachmentsByCustomerIdQueryHandler(IRepository<Attachment> repo)
+public class GetAttachmentsByCustomerIdQueryHandler(IApplicationDbContext context)
     : IRequestHandler<GetAttachmentsByCustomerIdQuery, List<AttachmentDto>>
 {
     public async Task<List<AttachmentDto>> Handle(
         GetAttachmentsByCustomerIdQuery request, CancellationToken ct)
     {
-        var attachments = await repo.ExecuteAsync(
-            repo.Query()
-                .Where(a => a.CustomerId == request.CustomerId)
-                .OrderByDescending(a => a.CreatedAt),
-            ct);
+        var attachments = await context.Attachments
+            .AsNoTracking()
+            .Where(a => a.CustomerId == request.CustomerId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new AttachmentDto
+            {
+                Id            = a.Id,
+                CustomerId    = a.CustomerId,
+                FileName      = a.FileName,
+                ContentType   = a.ContentType,
+                SizeBytes     = a.SizeBytes,
+                CreatedAt     = a.CreatedAt,
+                CreatedBy     = a.CreatedBy
+            })
+            .ToListAsync(ct);
 
-        return attachments.Select(a => new AttachmentDto
+        foreach (var a in attachments)
         {
-            Id            = a.Id,
-            CustomerId    = a.CustomerId,
-            FileName      = a.FileName,
-            ContentType   = a.ContentType,
-            SizeBytes     = a.SizeBytes,
-            SizeFormatted = FormatSize(a.SizeBytes),
-            CreatedAt     = a.CreatedAt,
-            CreatedBy     = a.CreatedBy
-        }).ToList();
+            a.SizeFormatted = FormatSize(a.SizeBytes);
+        }
+
+        return attachments;
     }
 
     private static string FormatSize(long bytes) => bytes switch

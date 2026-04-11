@@ -1,8 +1,8 @@
 using AutoMapper;
 using MediatR;
 using NovaCRM.Application.DTOs;
+using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Entities;
-using NovaCRM.Domain.Interfaces;
 
 namespace NovaCRM.Application.Features.Notes.Commands;
 public record CreateNoteCommand(
@@ -11,14 +11,13 @@ public record CreateNoteCommand(
     DateTime? FollowUpDate) : IRequest<NoteDto>;
 
 public class CreateNoteCommandHandler(
-    IRepository<Note> repo,
-    IRepository<Customer> customerRepo,
+    IApplicationDbContext context,
     IMapper mapper)
     : IRequestHandler<CreateNoteCommand, NoteDto>
 {
     public async Task<NoteDto> Handle(CreateNoteCommand request, CancellationToken ct)
     {
-        _ = await customerRepo.GetByIdAsync(request.CustomerId)
+        _ = await context.Customers.FindAsync(new object[] { request.CustomerId }, ct)
             ?? throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
 
         var note = new Note
@@ -28,8 +27,8 @@ public class CreateNoteCommandHandler(
             FollowUpDate = request.FollowUpDate
         };
 
-        await repo.AddAsync(note);
-        await repo.SaveChangesAsync();
+        context.Notes.Add(note);
+        await context.SaveChangesAsync(ct);
         return mapper.Map<NoteDto>(note);
     }
 }
