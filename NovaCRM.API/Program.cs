@@ -9,6 +9,7 @@ using NovaCRM.Application.Common;
 using NovaCRM.Application.Interfaces;
 using NovaCRM.Infrastructure;
 using NovaCRM.Infrastructure.Data.Seed;
+using NovaCRM.API.Hubs;
 using NovaCRM.API.Middleware;
 using NovaCRM.API.Services;
 using Scalar.AspNetCore;
@@ -122,6 +123,9 @@ try
             opts.JsonSerializerOptions.Converters.Add(
                 new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+    builder.Services.AddSignalR();
+    builder.Services.AddTransient<IDomainEventDispatcher, SignalRDomainEventDispatcher>();
+
     builder.Services.AddSwaggerGen(opts =>
     {
         opts.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "NovaCRM API", Version = "v1" });
@@ -197,6 +201,7 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+    app.MapHub<DomainEventHub>("/hubs/domain-events");
 
     await DataSeeder.SeedAsync(app.Services);
 

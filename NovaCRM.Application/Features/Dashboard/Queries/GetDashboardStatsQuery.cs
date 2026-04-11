@@ -6,15 +6,14 @@ using NovaCRM.Application.Common;
 using NovaCRM.Application.DTOs;
 using NovaCRM.Application.Interfaces;
 using NovaCRM.Domain.Enums;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace NovaCRM.Application.Features.Dashboard.Queries;
 
 public record GetDashboardStatsQuery : IRequest<DashboardStatsDto>;
 
 public class GetDashboardStatsQueryHandler(
-    IMemoryCache           cache,
-    IApplicationDbContext  context,
+    ICacheService cache,
+    IApplicationDbContext context,
     IMapper mapper)
     : IRequestHandler<GetDashboardStatsQuery, DashboardStatsDto>
 {
@@ -27,9 +26,10 @@ public class GetDashboardStatsQueryHandler(
 
         const string cacheKey = "dashboard_stats_global";
 
-        if (cache.TryGetValue(cacheKey, out DashboardStatsDto? cachedStats))
+        var cachedStats = await cache.GetAsync<DashboardStatsDto>(cacheKey, ct);
+        if (cachedStats is not null)
         {
-            return cachedStats!;
+            return cachedStats;
         }
 
         var totalCustomers = await context.Customers.CountAsync(ct);
@@ -72,10 +72,7 @@ public class GetDashboardStatsQueryHandler(
             RecentActivities   = recentActivities
         };
 
-        var cacheOptions = new MemoryCacheEntryOptions()
-            .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
-        
-        cache.Set(cacheKey, stats, cacheOptions);
+        await cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(5), ct);
 
         return stats;
     }

@@ -45,8 +45,14 @@ public static class DependencyInjection
 
         services.AddScoped<IJwtService, JwtService>();
 
-        services.AddMemoryCache();
-        services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
+        services.AddStackExchangeRedisCache(opts =>
+        {
+            opts.Configuration = config.GetConnectionString("Redis") ?? "localhost:6379";
+            opts.InstanceName = "NovaCRM_";
+        });
+        
+        services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddSingleton<ITokenBlacklistService, RedisTokenBlacklistService>();
 
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
